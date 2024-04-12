@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { UserCredentialModule } from './user/user_credential/user_credential.module';
 import {MongooseModule} from "@nestjs/mongoose";
 import {ConfigModule, ConfigService} from "@nestjs/config"
+import { JwtModule } from '@nestjs/jwt';
 
 @Module({
   imports: [
@@ -18,4 +19,6 @@ import {ConfigModule, ConfigService} from "@nestjs/config"
   controllers: [],
   providers: [],
 })
-export class AppModule {}
+export class AppModule {
+  
+}

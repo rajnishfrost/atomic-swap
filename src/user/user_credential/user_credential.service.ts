@@ -16,4 +16,8 @@ export class UserCredentialService {
   find(data){
     return this.userModel.find(data)
   }
+
+  async findOneAndUpdate(key, data) {
+    return this.userModel.findOneAndUpdate(key, data, { new: true });
+  }
 }
