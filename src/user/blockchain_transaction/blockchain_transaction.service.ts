@@ -1,26 +1,25 @@
 import { Injectable } from '@nestjs/common';
-import { CreateBlockchainTransactionDto } from './dto/create-blockchain_transaction.dto';
-import { UpdateBlockchainTransactionDto } from './dto/update-blockchain_transaction.dto';
+import { InjectModel } from '@nestjs/mongoose';
+import { Network, NetworkDocument } from './network.model';
+import { Model } from 'mongoose';
 
 @Injectable()
 export class BlockchainTransactionService {
-  create(createBlockchainTransactionDto: CreateBlockchainTransactionDto) {
-    return 'This action adds a new blockchainTransaction';
+
+  constructor(
+    @InjectModel(Network.name) private networkModel : Model<NetworkDocument>,
+  ){}
+
+  save(data) {
+    return new this.networkModel(data).save();
   }
 
-  findAll() {
-    return `This action returns all blockchainTransaction`;
+  find(data){
+    return this.networkModel.find(data)
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} blockchainTransaction`;
+  async findOneAndUpdate(key, data) {
+    return this.networkModel.findOneAndUpdate(key, data, { new: true });
   }
 
-  update(id: number, updateBlockchainTransactionDto: UpdateBlockchainTransactionDto) {
-    return `This action updates a #${id} blockchainTransaction`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} blockchainTransaction`;
-  }
 }
