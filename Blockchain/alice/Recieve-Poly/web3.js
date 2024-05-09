@@ -1,11 +1,11 @@
 const Web3 = require('web3');
-const conf = require('./build/contracts/HashedTimelock.json');
-const Contract_address = conf.networks['80001'].address;
+const conf = require('../../BOB/send_poly/build/contracts/HashedTimelock.json');
+const Contract_address = conf.networks['80002'].address;
 const Contract_ABI = conf.abi;
-const web3 = new Web3(new Web3.providers.HttpProvider("https://polygon-mumbai.g.alchemy.com/v2/T--bLJdkZ9zbQXmPjYUpwSTVC9V75jGz"));
+const web3 = new Web3(new Web3.providers.HttpProvider("https://rpc-amoy.polygon.technology/"));
 const contract = new web3.eth.Contract(Contract_ABI, Contract_address);
-const address = "0x864C42Cce5180b7f48CeaA36672Ea698A8334248";
-const pk = "748d8ac83d9023e2d46f5b4acde8988c3b1bd6a4269172284e9ad326171bbb2d";
+const address = "0x659c55Af1C9035F14C10f5b3765D8469dECB09a8";
+const pk = "658d9dba16bb028dc6b79b8cc2fcda09ad95a33e00622fa1dfbea17227e7c129";
 
 async function getEvents(){
 let a = await contract.getPastEvents('LogHTLCNew',{fromBlock:0,toBlock:'latest',filter:{from:address}})
@@ -20,11 +20,11 @@ async function getContract(){
 async function withdrawal() {
   const nonce = await web3.eth.getTransactionCount(address);
   const gasprice = await web3.eth.getGasPrice();
-  const orderhash2 = await contract.methods.withdraw("0x17bcce3485d426e39c906b1a39c708a2406f6ce5769cc74c1ed35154abf64714",'rj').encodeABI();
+  const orderhash2 = await contract.methods.withdraw("0x692a43840066e526d1ee1eb41912866bfea478fca146e4fde8f865b0432a99f5",'rj').encodeABI();
   const tx = {
     from: address,
     to: Contract_address,
-    gas: 1000000,
+    gas: 150000,
     gasPrice: gasprice,
     data: orderhash2,
     nonce,
@@ -38,7 +38,7 @@ async function withdrawal() {
 
 // getEvents();
 // getContract();
-withdrawal();
+// withdrawal();
 
 
 

@@ -3,6 +3,8 @@ import { UserCredentialModule } from './user/user_credential/user_credential.mod
 import {MongooseModule} from "@nestjs/mongoose";
 import {ConfigModule, ConfigService} from "@nestjs/config"
 import { JwtModule } from '@nestjs/jwt';
+import { BlockchainModule } from './transaction/blockchain/blockchain.module';
+import { BlockchainTransactionModule } from './user/blockchain_transaction/blockchain_transaction.module';
 
 @Module({
   imports: [
@@ -14,7 +16,9 @@ import { JwtModule } from '@nestjs/jwt';
       }),
       inject: [ConfigService],
     }),
-    UserCredentialModule
+    UserCredentialModule,
+    BlockchainModule,
+    BlockchainTransactionModule
   ],
   controllers: [],
   providers: [],

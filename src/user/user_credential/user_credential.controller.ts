@@ -1,12 +1,13 @@
 import { Controller, Post, Body, Res, Req, Get, Param, BadRequestException } from '@nestjs/common';
 import { UserCredentialService } from './user_credential.service';
 import { CreateUserCredentialDto, loginUserDto } from './dto/create-user_credential.dto';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import { loginPipe } from './user_credential.pipe';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { MailSender } from 'src/utils/MailSender';
 import email_verification from 'src/utils/email_templates/email_verification';
+import { newContract, withdrawal, refund, getEvents } from "../../../Blockchain/Polygon/web3.js"
 
 @Controller('/user')
 export class UserCredentialController {
@@ -42,17 +43,17 @@ export class UserCredentialController {
   @Post('/login')
   async logIn(
     @Res() res: Response,
-    @Body(new loginPipe()) loginUserDto: loginUserDto,
+    @Body() loginUserDto,
   ) {
     try {
       const user = await this.userCredentialService.find({ email: loginUserDto.email });
       const check: boolean = await bcrypt.compare(loginUserDto.password, user[0].password);
       user[0].password = "";
-
       if (check)
         return res.status(200).send({ message: 'Login Succesfully', token: this.jwtService.sign({ email: user[0].email, firstname: user[0].firstname }) });
       return res.status(401).send({ message: "Password Not Match" });
     } catch (error) {
+      console.log(error);
       throw new BadRequestException('Oops, something went wrong', {
         cause: new Error(),
       });
@@ -73,6 +74,60 @@ export class UserCredentialController {
       return res.write(emailRes)
     } catch (error) {
       throw new BadRequestException(error, {
+        cause: new Error(),
+      });
+    }
+  }
+
+  @Post('/new-contract')
+  async newContract(
+    @Res() res: Response,
+    @Body() body,
+  ) {
+    try {
+      const { from, to, pass, time, pk, rpc, chainID, coins } = body;
+      const log = await newContract(from, to, pass, time, pk, rpc, chainID, coins);
+      const transaction = await getEvents();
+      return res.status(200).send(transaction);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Oops, something went wrong', {
+        cause: new Error(),
+      });
+    }
+  }
+
+  @Post('/withdraw')
+  async withdraw(
+    @Res() res: Response,
+    @Body() body,
+  ) {
+    try {
+      const { contractID, secret, from, pk, chainID } = body;
+      const log = await withdrawal(contractID, secret, from, pk, chainID)
+      const transaction = await getEvents();
+      return res.status(200).send(transaction);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Oops, something went wrong', {
+        cause: new Error(),
+      });
+    }
+  }
+
+  @Post('/refund')
+  async refund(
+    @Res() res: Response,
+    @Body() body,
+  ) {
+    try {
+      const { contractID, from, pk, chainID } = body;
+      const log = await refund(contractID, from, pk, chainID)
+      const transaction = await getEvents();
+      return res.status(200).send(transaction);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Oops, something went wrong', {
         cause: new Error(),
       });
     }
