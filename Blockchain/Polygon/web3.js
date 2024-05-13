@@ -34,6 +34,12 @@ async function newContract(from, to, pass, time, pk, rpc, chainID, coins) {
   const signature = await web3.eth.accounts.signTransaction(tx, pk);
   const receipt = await web3.eth.sendSignedTransaction(signature.rawTransaction);
   console.log(receipt);
+  if(receipt){
+    console.log('its object');
+  }
+  else{
+    console.log("its array");
+  }
   return receipt
 }
 

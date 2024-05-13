@@ -15,7 +15,7 @@ import { JwtModule } from '@nestjs/jwt';
           expiresIn: process.env.TIME,
         },
       }),
-    })
+    }),
   ] ,
   controllers: [UserCredentialController],
   providers: [UserCredentialService],

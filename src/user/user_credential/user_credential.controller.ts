@@ -1,12 +1,15 @@
-import { Controller, Post, Body, Res, Req, Get, Param, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Body, Req , Res, Get, Param, BadRequestException, UseGuards, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { UserCredentialService } from './user_credential.service';
 import { CreateUserCredentialDto, loginUserDto } from './dto/create-user_credential.dto';
-import { Response } from 'express';
+import { Response, Express, Request } from 'express';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { MailSender } from 'src/utils/MailSender';
 import email_verification from 'src/utils/email_templates/email_verification';
-import { newContract, withdrawal, refund, getEvents , getEventsByBlockNumber , getContract} from "../../../Blockchain/Polygon/web3.js"
+import { UserGuard } from 'src/user/user_credential/user_auth.gaurd';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 
 @Controller('/user')
 export class UserCredentialController {
@@ -49,7 +52,7 @@ export class UserCredentialController {
       const check: boolean = await bcrypt.compare(loginUserDto.password, user[0].password);
       user[0].password = "";
       if (check)
-        return res.status(200).send({ message: 'Login Succesfully', token: this.jwtService.sign({ email: user[0].email, firstname: user[0].firstname }) });
+        return res.status(200).send({ message: 'Login Succesfully', token: this.jwtService.sign({ email: user[0].email, firstname: user[0].firstname , profileImageURL : user[0].profileImageUrl }, { expiresIn: process.env.LOGIN_TOKEN_TIME }) });
       return res.status(401).send({ message: "Password Not Match" });
     } catch (error) {
       console.log(error);
@@ -78,5 +81,47 @@ export class UserCredentialController {
     }
   }
 
- 
+  @UseGuards(UserGuard)
+  @Get('/verify-token')
+  verifyToken(
+    @Res() res: Response,
+  ) {
+    res.status(200).send({ msg: "token verified" })
+  }
+
+  @UseGuards(UserGuard)
+  @Post('/profile-image')
+  @UseInterceptors(FileInterceptor('profileImage', {
+    storage: diskStorage({
+      destination: './uploads/profile-image',
+      filename: (req, file, cb) => {
+        const randomName = Array(32).fill(null).map(() => (Math.round(Math.random() * 16)).toString(16)).join('');
+        return cb(null, `${randomName}${extname(file.originalname)}`);
+      },
+    }),
+    limits: {
+      fileSize: 1024 * 1024 * 1 // 1 MB file size limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (!file.originalname.match(/\.(jpg|jpeg|png)$/)) {
+        return cb(new Error('Only JPG, JPEG, and PNG files are allowed!'), false);
+      }
+      cb(null, true);
+    },
+  }))
+  async profileImage(
+    @UploadedFile() image: Express.Multer.File,
+    @Res() res: Response,
+    @Req() req : any
+  ) {
+    try {
+      const profileURL =`${process.env.PROFILE_IMAGE_BASE_URL}${image.filename}`
+      this.userCredentialService.findOneAndUpdate({email : req.user.email} , {profileImageUrl : profileURL})
+      res.status(200).send({ msg: "profile image uploaded"})
+    } catch (error) {
+      throw new BadRequestException(error, {
+        cause: new Error(),
+      });
+    }
+  }
 }
