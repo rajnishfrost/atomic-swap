@@ -4,13 +4,17 @@ import { IsArray, IsNotEmpty, IsNumber, IsString, ValidateNested } from "class-v
 export class AddNetwork {
     @IsNotEmpty()
     @IsString()
-    name : string
+    name: string
+
+    @IsNotEmpty()
+    @IsString()
+    explorer: string
 
     @IsNotEmpty()
     @IsNumber()
-    chainID : number
+    chainID: number
 
-    @IsArray()
-    @IsString({ each: true })
-    rpc : string[]
+    @IsNotEmpty()
+    @IsString()
+    rpc: string
 }

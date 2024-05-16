@@ -6,7 +6,7 @@ import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { MailSender } from 'src/utils/MailSender';
 import email_verification from 'src/utils/email_templates/email_verification';
-import { UserGuard } from 'src/user/user_credential/user_auth.gaurd';
+import { UserGuard } from 'src/utils/gaurds/user_auth.gaurd';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -85,6 +85,7 @@ export class UserCredentialController {
   @Get('/verify-token')
   verifyToken(
     @Res() res: Response,
+    @Req() req : any
   ) {
     res.status(200).send({ msg: "token verified" })
   }

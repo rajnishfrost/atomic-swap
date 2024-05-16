@@ -7,12 +7,15 @@ export type NetworkDocument = Network & Document;
 export class Network {
     @Prop()
     name: string;
+    
+    @Prop()
+    explorer: string;
 
     @Prop()
     chainID: number;
 
     @Prop()
-    rpc: string[];
+    rpc: string;
 }
 
 export const networkSchema = SchemaFactory.createForClass(Network);

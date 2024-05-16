@@ -12,8 +12,7 @@ async function bootstrap() {
   app.useStaticAssets(join(process.cwd() + '/uploads'));
   app.enableCors();
   app.setGlobalPrefix('/api/v1');
-  app.useGlobalPipes(new ValidationPipe({whitelist: true,}),
-  );
+  app.useGlobalPipes(new ValidationPipe({whitelist: true,}));
   mongoose.set('debug', true);
   await app.listen(4000);
 }

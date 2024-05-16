@@ -1,25 +1,28 @@
-import { Controller, Get, Post, Body, UseGuards, Res, BadRequestException , Req} from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards, Res, BadRequestException, Req } from '@nestjs/common';
 import { BlockchainTransactionService } from './blockchain_transaction.service';
 import { Response } from 'express';
 import { newContract, withdrawal, refund, getEvents, getEventsByBlockNumber, getContract } from "../../../Blockchain/Polygon/web3.js"
 import { AddNetwork } from './dto/network.dto';
-import { UserGuard } from '../user_credential/user_auth.gaurd';
+import { UserGuard } from '../../utils/gaurds/user_auth.gaurd';
+import { CustomJsFunctions } from "../../utils/custom_js_functions/CustomJsFunctions";
 
 @Controller('blockchain-transaction')
 export class BlockchainTransactionController {
   constructor(private readonly blockchainTransactionService: BlockchainTransactionService) { }
+  private customJsFunction = new CustomJsFunctions();
 
   @UseGuards(UserGuard)
   @Post('/new-contract')
   async newContract(
     @Res() res: Response,
     @Body() body,
-    @Req() req : any
+    @Req() req: any
   ) {
     try {
       const { from, to, pass, time, pk, rpc, chainID, coins, email } = body;
-      const contract_data = await newContract(from, to, pass, time, pk, rpc, chainID, coins);
-      this.blockchainTransactionService.saveTransaction({email , transaction : contract_data});
+      const decrypted_PK = this.customJsFunction.decrypt(pk);
+      const contract_data = await newContract(from, to, pass, time, decrypted_PK, rpc, chainID, coins);
+      this.blockchainTransactionService.saveTransaction({ email, transaction: {contract_data , chainID} });
       const transaction = await getEventsByBlockNumber(contract_data.blockNumber, chainID, rpc);
       return res.status(200).send(transaction);
     } catch (error) {
@@ -35,14 +38,18 @@ export class BlockchainTransactionController {
     }
   }
 
+  @UseGuards(UserGuard)
   @Post('/withdraw')
   async withdraw(
     @Res() res: Response,
     @Body() body,
+    @Req() req: any
   ) {
     try {
-      const { contractID, secret, from, pk, chainID , rpc} = body;
-      const transaction = await withdrawal(contractID, secret, from, pk, chainID)
+      const { contractID, secret, from, pk, chainID, rpc } = body;
+      const decrypted_PK = this.customJsFunction.decrypt(pk);
+      const transaction = await withdrawal(contractID, secret, from, decrypted_PK, chainID);
+      this.blockchainTransactionService.saveTransaction({ email: req.user.email, transaction: transaction });
       return res.status(200).send(transaction);
     } catch (error) {
       console.log(error);
@@ -59,7 +66,8 @@ export class BlockchainTransactionController {
   ) {
     try {
       const { contractID, from, pk, chainID } = body;
-      const log = await refund(contractID, from, pk, chainID)
+      // const decrypted_PK = this.customJsFunction.decrypt(pk);
+      await refund(contractID, from, pk, chainID)
       const transaction = await getEvents(chainID);
       return res.status(200).send(transaction);
     } catch (error) {
@@ -130,6 +138,23 @@ export class BlockchainTransactionController {
     try {
       const network = await this.blockchainTransactionService.find({});
       return res.status(200).send({ message: 'fetch successfully', data: network });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Oops, something went wrong', {
+        cause: new Error(),
+      });
+    }
+  }
+
+  @UseGuards(UserGuard)
+  @Get('/transaction')
+  async getTransaction(
+    @Res() res: Response,
+    @Req() req : any
+  ) {
+    try {
+      const trsanctions = await this.blockchainTransactionService.findTransaction({email : req.user.email});
+      return res.status(200).send({ message: 'fetch successfully', data: trsanctions });
     } catch (error) {
       console.log(error);
       throw new BadRequestException('Oops, something went wrong', {
