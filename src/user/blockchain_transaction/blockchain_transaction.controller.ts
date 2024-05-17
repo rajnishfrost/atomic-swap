@@ -11,7 +11,7 @@ export class BlockchainTransactionController {
   constructor(private readonly blockchainTransactionService: BlockchainTransactionService) { }
   private customJsFunction = new CustomJsFunctions();
 
-  @UseGuards(UserGuard)
+  // @UseGuards(UserGuard)
   @Post('/new-contract')
   async newContract(
     @Res() res: Response,
@@ -49,7 +49,6 @@ export class BlockchainTransactionController {
       const { contractID, secret, from, pk, chainID, rpc } = body;
       const decrypted_PK = this.customJsFunction.decrypt(pk);
       const transaction = await withdrawal(contractID, secret, from, decrypted_PK, chainID);
-      this.blockchainTransactionService.saveTransaction({ email: req.user.email, transaction: transaction });
       return res.status(200).send(transaction);
     } catch (error) {
       console.log(error);
