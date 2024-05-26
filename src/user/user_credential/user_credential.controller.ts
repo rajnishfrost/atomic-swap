@@ -125,4 +125,46 @@ export class UserCredentialController {
       });
     }
   }
+
+  @Post('/image-upload-link')
+  async imageUploadLink(
+    @Res() res: Response,
+    @Body() body: { image: string[] },
+  ) {
+    try {
+      const existingDocuments = await this.userCredentialService.findImage({});
+      let document;
+      if (existingDocuments.length > 0) {
+        document = existingDocuments[0];
+        document.image.push(...body.image);
+      } else {
+        // If no document exists, create a new one
+        document = { image: body.image };
+      }
+      
+      await this.userCredentialService.saveImage(document);
+      return res.status(200).send({ msg: 'Data saved successfully' });
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Oops, something went wrong', {
+        cause: new Error(),
+      });
+    }
+  }
+
+  @Get('/image-upload-link')
+  async getImageUploadLink(
+    @Res() res: Response,
+  ) {
+    try {
+      const existingDocuments = await this.userCredentialService.findImage({});
+      const generatedNumber = Math.floor(Math.random() * 22);      
+      return res.status(200).send(existingDocuments[0].image[generatedNumber]);
+    } catch (error) {
+      console.log(error);
+      throw new BadRequestException('Oops, something went wrong', {
+        cause: new Error(),
+      });
+    }
+  }
 }
